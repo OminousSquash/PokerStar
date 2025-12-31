@@ -1,9 +1,6 @@
 package com.varun.pokerstars.models;
 
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,6 +19,10 @@ public class PokerTable {
     private String name;
 
     @OneToMany
+    @JoinTable(
+            joinColumns = @JoinColumn(name = "poker_table_id"),
+            inverseJoinColumns = @JoinColumn(name = "player_id")
+    )
     private List<Player> players;
 
     private int smallBlind;

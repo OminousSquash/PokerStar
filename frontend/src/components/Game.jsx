@@ -35,11 +35,29 @@ const Game = () => {
                 }
             })
             const data = await res.json()
-            console.log(data)
+            await addPlayer({playerId: data.id})
         } catch(err) {
             alert(err)
         }
         setShowPlayerPopup(false)
+    }
+
+    const addPlayer = async ({playerId})  => {
+        const obj = {
+            "playerId": playerId,
+            "tableId": id
+        }
+        try {
+            await fetch("http://localhost:8080/table/addPlayer", {
+                method: "POST",
+                body: JSON.stringify(obj),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+        } catch(err) {
+            console.log(err)
+        }
     }
 
     return (

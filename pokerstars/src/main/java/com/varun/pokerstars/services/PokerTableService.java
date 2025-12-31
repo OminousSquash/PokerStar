@@ -33,24 +33,27 @@ public class PokerTableService {
         return tableRepository.save(pokerTable);
     }
 
-    public PokerTable addPlayer(AddPlayerDTO addPlayerDTO) throws NoSuchElementException, IllegalStateException
-    {
+    public PokerTable addPlayer(AddPlayerDTO addPlayerDTO) throws NoSuchElementException, IllegalArgumentException {
         String tableId = addPlayerDTO.getTableId();
         String playerId = addPlayerDTO.getPlayerId();
-        PokerTable pokerTable = tableRepository.findById(tableId).orElse(null);
-        if  (pokerTable == null) {
-            throw new NoSuchElementException("Table not found");
+
+        PokerTable pokerTable = tableRepository.findById(tableId)
+                .orElseThrow(() -> new NoSuchElementException("Table not found"));
+
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new NoSuchElementException("Player not found"));
+
+        boolean alreadyAdded = pokerTable.getPlayers().stream()
+                .anyMatch(p -> p.getId().equals(playerId));
+
+        if (alreadyAdded) {
+            throw new IllegalStateException("Player already exists at table");
         }
-        if (!playerRepository.findById(playerId).isPresent()) {
-            throw new NoSuchElementException("Player not found");
-        }
-        if (pokerTable.getPlayers().contains(playerId)) {
-            throw new IllegalStateException("Player already exists");
-        }
-        Player player = playerRepository.findById(playerId).orElse(null);
+
         pokerTable.getPlayers().add(player);
         return tableRepository.save(pokerTable);
     }
+
 
     public List<PokerTable> getAllTables() {
         return tableRepository.findAll();
