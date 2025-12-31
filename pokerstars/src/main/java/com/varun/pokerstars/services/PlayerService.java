@@ -1,10 +1,13 @@
 package com.varun.pokerstars.services;
 
+import com.varun.pokerstars.DTOs.AddPlayerDTO;
+import com.varun.pokerstars.DTOs.CreatePlayerDTO;
 import com.varun.pokerstars.models.Player;
 import com.varun.pokerstars.repository.PlayerRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class PlayerService {
@@ -29,5 +32,14 @@ public class PlayerService {
         if  (playerRepository.existsById(id)) {
             playerRepository.deleteById(id);
         }
+    }
+
+    public Player createPlayer(CreatePlayerDTO createPlayerDTO) {
+        Player player = new Player();
+        player.setId(UUID.randomUUID().toString());
+        player.setMoney(createPlayerDTO.getMoney());
+        player.setName(createPlayerDTO.getUsername());
+        player.setEmail("");
+        return playerRepository.save(player);
     }
 }

@@ -51,4 +51,16 @@ public class PokerTableService {
         pokerTable.getPlayers().add(player);
         return tableRepository.save(pokerTable);
     }
+
+    public List<PokerTable> getAllTables() {
+        return tableRepository.findAll();
+    }
+
+    public int getBuyIn(String tableId) throws NoSuchElementException {
+        PokerTable pokerTable = tableRepository.findById(tableId).orElse(null);
+        if (pokerTable == null) {
+            throw new NoSuchElementException("Table not found");
+        }
+        return pokerTable.getStartingAmt();
+    }
 }
