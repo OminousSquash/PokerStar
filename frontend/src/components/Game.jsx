@@ -6,16 +6,18 @@ const Game = () => {
     const [showPlayerPopup, setShowPlayerPopup] = useState(true)
     const [buyIn, setBuyIn] = useState(null)
 
-    useEffect(() => {
-        async function fetchBuyin() {
-            try {
-                const res = await fetch(`http://localhost:8080/table/${id}/buyIn`)
-                const data = await res.json()
-                setBuyIn(data)
-            } catch(err) {
-                console.log(err)
-            }
+    async function fetchBuyin() {
+        try {
+            const res = await fetch(`http://localhost:8080/table/${id}/buyIn`)
+            const data = await res.json()
+            setBuyIn(data)
+        } catch(err) {
+            console.log(err)
         }
+    }
+
+    useEffect(() => {
+        fetchBuyin()
     },[id])
 
     const sendData = async (username) => {
