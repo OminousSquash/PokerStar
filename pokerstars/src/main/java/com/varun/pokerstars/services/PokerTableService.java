@@ -2,6 +2,7 @@ package com.varun.pokerstars.services;
 
 import com.varun.pokerstars.DTOs.AddPlayerDTO;
 import com.varun.pokerstars.DTOs.CreateTableDTO;
+import com.varun.pokerstars.DTOs.RemovePlayerDTO;
 import com.varun.pokerstars.models.Player;
 import com.varun.pokerstars.models.PokerTable;
 import com.varun.pokerstars.repository.PlayerRepository;
@@ -65,5 +66,14 @@ public class PokerTableService {
             throw new NoSuchElementException("Table not found");
         }
         return pokerTable.getStartingAmt();
+    }
+
+    public PokerTable removePlayer(RemovePlayerDTO removePlayerDTO) throws NoSuchElementException {
+        String tableId = removePlayerDTO.getTableId();
+        String playerId = removePlayerDTO.getPlayerId();
+        PokerTable pokerTable = tableRepository.findById(tableId).orElseThrow(()->new NoSuchElementException("Table not found"));
+        Player player = playerRepository.findById(playerId).orElseThrow(()->new NoSuchElementException("Player not found"));
+        pokerTable.getPlayers().remove(player);
+        return tableRepository.save(pokerTable);
     }
 }

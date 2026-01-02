@@ -2,8 +2,10 @@ package com.varun.pokerstars.controllers;
 
 import com.varun.pokerstars.DTOs.AddPlayerDTO;
 import com.varun.pokerstars.DTOs.CreateTableDTO;
+import com.varun.pokerstars.DTOs.RemovePlayerDTO;
 import com.varun.pokerstars.models.PokerTable;
 import com.varun.pokerstars.services.PokerTableService;
+import org.hibernate.Remove;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -55,6 +57,16 @@ public class PokerTableController {
         try {
             int tableBuyIn = pokerTableService.getBuyIn(id);
             return ResponseEntity.ok(tableBuyIn);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/removePlayer")
+    public ResponseEntity<?> removePlayer(@RequestBody RemovePlayerDTO removePlayerDTO) {
+        try {
+            PokerTable pokerTable = pokerTableService.removePlayer(removePlayerDTO);
+            return  ResponseEntity.ok(pokerTable);
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
