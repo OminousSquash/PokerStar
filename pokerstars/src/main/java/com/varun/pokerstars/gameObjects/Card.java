@@ -1,4 +1,4 @@
-package com.varun.pokerstars.DTOs;
+package com.varun.pokerstars.gameObjects;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RemovePlayerDTO {
-    private String tableId;
-    private String playerId;
+public class Card {
+    private Suit suit;
+    private Rank rank;
 }

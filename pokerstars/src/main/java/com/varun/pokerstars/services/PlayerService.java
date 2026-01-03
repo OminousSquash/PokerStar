@@ -1,12 +1,12 @@
 package com.varun.pokerstars.services;
 
-import com.varun.pokerstars.DTOs.AddPlayerDTO;
 import com.varun.pokerstars.DTOs.CreatePlayerDTO;
 import com.varun.pokerstars.models.Player;
 import com.varun.pokerstars.repository.PlayerRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -41,5 +41,9 @@ public class PlayerService {
         player.setName(createPlayerDTO.getUsername());
         player.setEmail("");
         return playerRepository.save(player);
+    }
+
+    public Player getplayer(String id) {
+        return playerRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Player with id not found"));
     }
 }

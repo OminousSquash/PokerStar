@@ -5,9 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class AddPlayerDTO {
+@AllArgsConstructor
+public class TableIdDTO {
     private String tableId;
-    private String playerId;
 }

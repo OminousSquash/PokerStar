@@ -1,11 +1,13 @@
-import { useParams } from "react-router-dom";
+import { useNavigationType, useParams } from "react-router-dom";
 import CreatePlayerPopup from "./CreatePlayerPopup";
 import { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
+import { listItemAvatarClasses } from "@mui/material/ListItemAvatar";
 const Game = () => {
     const {id: tableId} = useParams()
     const [showPlayerPopup, setShowPlayerPopup] = useState(true)
     const [buyIn, setBuyIn] = useState(null)
+    const navType = useNavigationType();
 
     async function fetchBuyin() {
         try {
@@ -64,8 +66,11 @@ const Game = () => {
 
     const removePlayer = async () => {
         try {
+            const playerId = localStorage.getItem("playerId");
+            const tableId = localStorage.getItem("tableId");
+            if (!playerId || !tableId) return
             const obj = {
-                "playerId": localStorage.getItem("playerId"),
+                "playerId": playerId,
                 "tableId": tableId
             }
             const res = await fetch("http://localhost:8080/table/removePlayer", {
@@ -75,11 +80,21 @@ const Game = () => {
                 },
                 body: JSON.stringify(obj)
             })
+            localStorage.removeItem("playerId");
+            localStorage.removeItem("tableId");
             console.log(await res.json())
         } catch (err) {
             console.log(err)
         }
     }
+
+    useEffect(() => {
+        const onBack = () => removePlayer();
+        window.addEventListener("popstate", onBack)
+        return () => {
+            window.removeEventListener("popstate", onBack)
+        }
+    }, [])
 
     return (
         <>

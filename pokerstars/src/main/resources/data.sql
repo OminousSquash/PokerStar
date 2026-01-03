@@ -2,6 +2,8 @@ DELETE FROM poker_table_players;
 DELETE FROM poker_table;
 DELETE FROM player;
 
+ALTER TABLE poker_table MODIFY game_active BOOLEAN NOT NULL DEFAULT FALSE;
+
 -- Insert initial poker tables (players list empty)
 INSERT INTO poker_table (id, name, small_blind, big_blind, starting_amt)
 VALUES

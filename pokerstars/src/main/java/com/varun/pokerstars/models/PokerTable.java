@@ -1,11 +1,12 @@
 package com.varun.pokerstars.models;
 
+import com.varun.pokerstars.gameObjects.Card;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.*;
 
 @Data
 @Entity
@@ -23,9 +24,16 @@ public class PokerTable {
             joinColumns = @JoinColumn(name = "poker_table_id"),
             inverseJoinColumns = @JoinColumn(name = "player_id")
     )
-    private List<Player> players;
+    private List<Player> players = new ArrayList<>();
+
+    @Transient
+    private List<ActivePlayer> activePlayers = new ArrayList<>();
 
     private int smallBlind;
     private int bigBlind;
     private int startingAmt;
+    @Column(nullable = false)
+    private boolean gameActive = false;
+    public void appendCommunity(int numberCards) {
+    }
 }

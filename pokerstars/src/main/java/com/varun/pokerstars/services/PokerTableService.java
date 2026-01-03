@@ -1,26 +1,36 @@
 package com.varun.pokerstars.services;
 
-import com.varun.pokerstars.DTOs.AddPlayerDTO;
+import com.varun.pokerstars.DTOs.GameStateDTO;
+import com.varun.pokerstars.DTOs.PlayerTableDTO;
 import com.varun.pokerstars.DTOs.CreateTableDTO;
-import com.varun.pokerstars.DTOs.RemovePlayerDTO;
+import com.varun.pokerstars.gameObjects.*;
+import com.varun.pokerstars.models.ActivePlayer;
 import com.varun.pokerstars.models.Player;
 import com.varun.pokerstars.models.PokerTable;
-import com.varun.pokerstars.repository.PlayerRepository;
 import com.varun.pokerstars.repository.TableRepository;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class PokerTableService {
     private final TableRepository tableRepository;
-    private final PlayerRepository playerRepository;
+    private final PlayerService playerService;
+    private final GameStateService gameStateService;
 
-    public PokerTableService(TableRepository tableRepository,  PlayerRepository playerRepository) {
+    public PokerTableService(TableRepository tableRepository,  PlayerService playerService, GameStateService gameStateService) {
         this.tableRepository = tableRepository;
-        this.playerRepository = playerRepository;
+        this.playerService = playerService;
+        this.gameStateService = gameStateService;
+    }
+
+    public PokerTable getPokerTable(String tableId) throws  NoSuchElementException {
+        PokerTable pokerTable = tableRepository.findById(tableId).orElseThrow(() -> new NoSuchElementException("Table not found"));
+        return pokerTable;
+    }
+
+    public List<Player> getPlayers(String tableId) throws NoSuchElementException {
+        PokerTable pokerTable = getPokerTable(tableId);
+        return pokerTable.getPlayers();
     }
 
     public PokerTable createTable(CreateTableDTO createTableDTO) {
@@ -31,18 +41,25 @@ public class PokerTableService {
         pokerTable.setStartingAmt(createTableDTO.getStartingAmt());
         pokerTable.setPlayers(List.of());
         pokerTable.setId(UUID.randomUUID().toString());
+        pokerTable.setGameActive(false);
         return tableRepository.save(pokerTable);
     }
 
-    public PokerTable addPlayer(AddPlayerDTO addPlayerDTO) throws NoSuchElementException, IllegalArgumentException {
-        String tableId = addPlayerDTO.getTableId();
-        String playerId = addPlayerDTO.getPlayerId();
+    public GameStateDTO startGame(String tableId) throws NoSuchElementException{
+        PokerTable pokerTable = getPokerTable(tableId);
+        GameStateDTO gameStateDTO = gameStateService.createGameState(getPokerTable(tableId));
+        pokerTable.setGameActive(true);
+        return gameStateDTO;
+    }
+
+    public PokerTable addPlayer(PlayerTableDTO playerTableDTO) throws NoSuchElementException, IllegalArgumentException {
+        String tableId = playerTableDTO.getTableId();
+        String playerId = playerTableDTO.getPlayerId();
 
         PokerTable pokerTable = tableRepository.findById(tableId)
                 .orElseThrow(() -> new NoSuchElementException("Table not found"));
 
-        Player player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new NoSuchElementException("Player not found"));
+        Player player = playerService.getplayer(playerId);
 
         boolean alreadyAdded = pokerTable.getPlayers().stream()
                 .anyMatch(p -> p.getId().equals(playerId));
@@ -68,12 +85,28 @@ public class PokerTableService {
         return pokerTable.getStartingAmt();
     }
 
-    public PokerTable removePlayer(RemovePlayerDTO removePlayerDTO) throws NoSuchElementException {
-        String tableId = removePlayerDTO.getTableId();
-        String playerId = removePlayerDTO.getPlayerId();
+    public PokerTable removePlayer(PlayerTableDTO playerTableDTO) throws NoSuchElementException {
+        String tableId = playerTableDTO.getTableId();
+        String playerId = playerTableDTO.getPlayerId();
         PokerTable pokerTable = tableRepository.findById(tableId).orElseThrow(()->new NoSuchElementException("Table not found"));
-        Player player = playerRepository.findById(playerId).orElseThrow(()->new NoSuchElementException("Player not found"));
+        Player player = playerService.getplayer(playerId);
         pokerTable.getPlayers().remove(player);
         return tableRepository.save(pokerTable);
+    }
+
+    public GameStateDTO dealFlop(String tableId) throws NoSuchElementException {
+        return gameStateService.dealFlop(tableId);
+    }
+
+    public GameStateDTO dealTurn(String tableId) throws NoSuchElementException {
+        return gameStateService.dealTurn(tableId);
+    }
+
+    public GameStateDTO dealRiver(String tableId) throws NoSuchElementException {
+        return gameStateService.dealRiver(tableId);
+    }
+
+    public ActivePlayer getActivePlayerDetails(PlayerTableDTO playerTableDTO) throws NoSuchElementException {
+        return gameStateService.getActivePlayer(playerTableDTO);
     }
 }
