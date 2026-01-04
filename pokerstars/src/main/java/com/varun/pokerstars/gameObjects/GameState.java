@@ -12,10 +12,10 @@ import java.util.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GameState {
-    private Deque<Card> deck;
-    private List<Card> community;
-    private List<ActivePlayer> activePlayers;
-    private int pot;
+    private Deque<Card> deck = new ArrayDeque<>();
+    private List<Card> community =  new ArrayList<>();
+    private List<ActivePlayer> activePlayers = new ArrayList<>();
+    private int pot = 0;
 
     public void appendCommunity(int numberCards) {
         if (community == null) {
@@ -25,7 +25,11 @@ public class GameState {
             throw new IllegalArgumentException("Deck not initialized or insufficient cards");
         }
         for  (int i = 0; i < numberCards; i++) {
-            community.add(deck.removeFirst());
+            community.add(deck.pop());
         }
+    }
+
+    public int getDeckSize() {
+        return deck.size();
     }
 }

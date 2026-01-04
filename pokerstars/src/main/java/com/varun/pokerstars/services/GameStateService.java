@@ -4,7 +4,6 @@ import com.varun.pokerstars.DTOs.GameStateDTO;
 import com.varun.pokerstars.DTOs.PlayerTableDTO;
 import com.varun.pokerstars.gameObjects.*;
 import com.varun.pokerstars.models.ActivePlayer;
-import com.varun.pokerstars.models.Player;
 import com.varun.pokerstars.models.PokerTable;
 import org.springframework.stereotype.Service;
 
@@ -30,8 +29,6 @@ public class GameStateService {
         GameState gameState = new GameState();
         // create deck
         shuffleDeck(gameState);
-        // create community cards
-        gameState.setCommunity(List.of());
         // init pot
         gameState.setPot(0);
         // assign players
@@ -229,5 +226,10 @@ public class GameStateService {
         }
         // high card
         return PokerHand.HIGH_CARD;
+    }
+
+    GameState getGameStateInternal(String tableId) {
+        GameState gameState = getGameState(tableId);
+        return gameState;
     }
 }
