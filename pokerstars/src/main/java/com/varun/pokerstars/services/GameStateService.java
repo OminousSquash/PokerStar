@@ -1,5 +1,6 @@
 package com.varun.pokerstars.services;
 
+import com.varun.pokerstars.DTOs.AddPlayerDTO;
 import com.varun.pokerstars.DTOs.GameStateDTO;
 import com.varun.pokerstars.DTOs.PlayerTableDTO;
 import com.varun.pokerstars.gameObjects.*;
@@ -18,7 +19,7 @@ public class GameStateService {
         this.playerService = playerService;
     }
 
-    private GameState getGameState(String tableId) throws NoSuchElementException {
+    public GameState getGameState(String tableId) throws NoSuchElementException {
         if (gameStateMap.containsKey(tableId)) {
             return gameStateMap.get(tableId);
         }
@@ -27,19 +28,28 @@ public class GameStateService {
 
     public GameStateDTO createGameState(PokerTable pokerTable) {
         GameState gameState = new GameState();
-        // create deck
-        shuffleDeck(gameState);
+        gameState.setDealerIdx(pokerTable.getDealerIdx());
         // init pot
         gameState.setPot(0);
-        // assign players
-        gameState.setActivePlayers(pokerTable.getPlayers()
-                .stream()
-                .map(player -> new ActivePlayer(player))
-                .toList());
-        // deal cards
-        GameStateDTO gameStateDTO = dealCards(gameState);
+        // initialize seat states
         gameStateMap.put(pokerTable.getId(), gameState);
-        return gameStateDTO;
+        return new GameStateDTO(gameState);
+    }
+
+
+    public GameStateDTO startGame(String tableId) {
+        GameState gameState = getGameState(tableId);
+        // shuffle deck
+        shuffleDeck(gameState);
+        // set players to active
+        for (Seat seat : gameState.getSeats()) {
+            if (seat.getSeatState().equals(SeatState.OCCUPIED_INACTIVE)) {
+                seat.setSeatState(SeatState.OCCUPIED_ACTIVE);
+            }
+        }
+        // deal cards
+        dealCards(gameState);
+        return new GameStateDTO(gameState);
     }
 
     private void shuffleDeck(GameState gameState) {
@@ -59,8 +69,12 @@ public class GameStateService {
     public GameStateDTO dealFlop(String tableId){
         GameState gameState = getGameState(tableId);
         gameState.appendCommunity(3);
-        for (ActivePlayer activePlayer : gameState.getActivePlayers()) {
-            evaluateHand(gameState, activePlayer);
+        for (Seat seat : gameState.getSeats()) {
+            if (seat.getSeatState().equals(SeatState.OCCUPIED_ACTIVE)) {
+                ActivePlayer activePlayer = seat.getMaybeActivePlayer().get();
+                PokerHand hand = evaluateHand(gameState, activePlayer);
+                activePlayer.setHand(hand);
+            }
         }
         return new  GameStateDTO(gameState);
     }
@@ -68,8 +82,12 @@ public class GameStateService {
     public GameStateDTO dealTurn(String tableId){
         GameState gameState = getGameState(tableId);
         gameState.appendCommunity(1);
-        for (ActivePlayer activePlayer : gameState.getActivePlayers()) {
-            evaluateHand(gameState, activePlayer);
+        for (Seat seat : gameState.getSeats()) {
+            if (seat.getSeatState().equals(SeatState.OCCUPIED_ACTIVE)) {
+                ActivePlayer activePlayer = seat.getMaybeActivePlayer().get();
+                PokerHand hand = evaluateHand(gameState, activePlayer);
+                activePlayer.setHand(hand);
+            }
         }
         return new GameStateDTO(gameState);
     }
@@ -77,35 +95,25 @@ public class GameStateService {
     public GameStateDTO dealRiver(String tableId){
         GameState gameState = getGameState(tableId);
         gameState.appendCommunity(1);
-        for (ActivePlayer activePlayer : gameState.getActivePlayers()) {
-            evaluateHand(gameState, activePlayer);
-        }
-        return new GameStateDTO(gameState);
-    }
-
-    public ActivePlayer getActivePlayer(PlayerTableDTO playerTableDTO){
-        GameState gameState = getGameState(playerTableDTO.getTableId());
-        Optional<ActivePlayer> activePlayer = gameState
-                .getActivePlayers()
-                .stream()
-                .filter(x -> x.getPlayer()
-                        .getId()
-                        .equals(playerTableDTO.getPlayerId()))
-                .findFirst();
-        if  (activePlayer.isPresent()) {
-            return activePlayer.get();
-        }
-        throw new NoSuchElementException("Player not found");
-    }
-
-    private GameStateDTO dealCards(GameState  gameState) {
-        List<ActivePlayer> activePlayers = gameState.getActivePlayers();
-        for (int i = 0; i < 2; i++) {
-            for (ActivePlayer activePlayer : activePlayers) {
-                activePlayer.getCards().add(gameState.getDeck().pop());
+        for (Seat seat : gameState.getSeats()) {
+            if (seat.getSeatState().equals(SeatState.OCCUPIED_ACTIVE)) {
+                ActivePlayer activePlayer = seat.getMaybeActivePlayer().get();
+                PokerHand hand = evaluateHand(gameState, activePlayer);
+                activePlayer.setHand(hand);
             }
         }
         return new GameStateDTO(gameState);
+    }
+
+    private void dealCards(GameState  gameState) {
+        for (int i = 0; i < 2; i++) {
+            for (Seat seat : gameState.getSeats()) {
+                if (seat.getSeatState().equals(SeatState.OCCUPIED_ACTIVE)) {
+                    ActivePlayer activePlayer = seat.getMaybeActivePlayer().get();
+                    activePlayer.getCards().add(gameState.getDeck().pop());
+                }
+            }
+        }
     }
 
     private void populateCountMaps(List<Card> cards, Map<Suit, Integer> suitCount, Map<Rank, Integer> rankCount){
@@ -228,8 +236,51 @@ public class GameStateService {
         return PokerHand.HIGH_CARD;
     }
 
+    public GameStateDTO addPlayer(AddPlayerDTO addPlayerDTO) throws NoSuchElementException, IllegalArgumentException {
+        String tableId = addPlayerDTO.getTableId();
+        String playerId = addPlayerDTO.getPlayerId();
+        int seatIdx = addPlayerDTO.getSeatIdx();
+        if (!(0 <= seatIdx && seatIdx <= 6)) {
+            throw new IllegalArgumentException("Invalid seat index");
+        }
+        GameState gameState = getGameState(tableId);
+        boolean alreadyPresent = gameState.getSeats().stream()
+                .flatMap(seat -> seat.getMaybeActivePlayer().stream())
+                .anyMatch(p -> p.getPlayer().getId().equals(playerId));
+        if (alreadyPresent) {
+            throw new IllegalArgumentException("Player already present in game");
+        }
+        if (!gameState.getSeats().get(seatIdx).getSeatState().equals(SeatState.EMPTY)) {
+            throw new IllegalArgumentException("Seat already taken in game");
+        }
+        ActivePlayer activePlayer = new ActivePlayer(playerService.getPlayer(playerId));
+        gameState.getSeats().set(seatIdx, new Seat(SeatState.OCCUPIED_INACTIVE, Optional.of(activePlayer)));
+        return new GameStateDTO(gameState);
+    }
+
     GameState getGameStateInternal(String tableId) {
         GameState gameState = getGameState(tableId);
         return gameState;
+    }
+
+    PokerHand getHand(PlayerTableDTO playerTableDTO) throws NoSuchElementException {
+        GameState gameState = getGameState(playerTableDTO.getTableId());
+        for (Seat seat : gameState.getSeats()) {
+            if (seat.getSeatState().equals(SeatState.OCCUPIED_ACTIVE) &&
+                seat.getMaybeActivePlayer().get().getPlayer().getId().equals(playerTableDTO.getPlayerId())) {
+                return seat.getMaybeActivePlayer().get().getHand();
+            }
+        }
+        throw new NoSuchElementException("No player found");
+    }
+
+    ActivePlayer getActivePlayer(PlayerTableDTO playerTableDTO) throws NoSuchElementException {
+        GameState gameState = getGameState(playerTableDTO.getTableId());
+        for (Seat seat : gameState.getSeats()) {
+            if (!seat.getMaybeActivePlayer().isEmpty() && seat.getMaybeActivePlayer().get().getPlayer().getId().equals(playerTableDTO.getPlayerId())) {
+                return seat.getMaybeActivePlayer().get();
+            }
+        }
+        throw new NoSuchElementException("No player found");
     }
 }

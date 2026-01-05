@@ -43,7 +43,7 @@ public class PlayerService {
         return playerRepository.save(player);
     }
 
-    public Player getplayer(String id) {
+    public Player getPlayer(String id) {
         return playerRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Player with id not found"));
     }
 }

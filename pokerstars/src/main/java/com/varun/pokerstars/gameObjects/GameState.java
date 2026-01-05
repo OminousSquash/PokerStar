@@ -9,13 +9,19 @@ import java.util.*;
 
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class GameState {
     private Deque<Card> deck = new ArrayDeque<>();
     private List<Card> community =  new ArrayList<>();
-    private List<ActivePlayer> activePlayers = new ArrayList<>();
+    private List<Seat> seats;
+    private int dealerIdx;
     private int pot = 0;
+
+    public GameState() {
+        this.seats = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            seats.add(new Seat(SeatState.EMPTY, Optional.empty()));
+        }
+    }
 
     public void appendCommunity(int numberCards) {
         if (community == null) {
@@ -27,9 +33,5 @@ public class GameState {
         for  (int i = 0; i < numberCards; i++) {
             community.add(deck.pop());
         }
-    }
-
-    public int getDeckSize() {
-        return deck.size();
     }
 }

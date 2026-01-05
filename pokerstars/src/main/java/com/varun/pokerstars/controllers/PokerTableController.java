@@ -1,10 +1,8 @@
 package com.varun.pokerstars.controllers;
 
-import com.varun.pokerstars.DTOs.GameStateDTO;
-import com.varun.pokerstars.DTOs.PlayerTableDTO;
-import com.varun.pokerstars.DTOs.CreateTableDTO;
-import com.varun.pokerstars.DTOs.TableIdDTO;
+import com.varun.pokerstars.DTOs.*;
 import com.varun.pokerstars.gameObjects.Card;
+import com.varun.pokerstars.gameObjects.PokerHand;
 import com.varun.pokerstars.models.ActivePlayer;
 import com.varun.pokerstars.DTOs.GameStateDTO;
 import com.varun.pokerstars.models.PokerTable;
@@ -32,10 +30,10 @@ public class PokerTableController {
     }
 
     @PostMapping("/addPlayer")
-    public ResponseEntity<?>  addPlayer(@RequestBody PlayerTableDTO playerTableDTO) {
+    public ResponseEntity<?>  addPlayer(@RequestBody AddPlayerDTO addPlayerDTO) {
         try {
-            PokerTable pokerTable =  pokerTableService.addPlayer(playerTableDTO);
-            return ResponseEntity.ok(pokerTable);
+            GameStateDTO gameStateDTO =  pokerTableService.addPlayer(addPlayerDTO);
+            return ResponseEntity.ok(gameStateDTO);
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (IllegalStateException e) {
@@ -108,8 +106,8 @@ public class PokerTableController {
     @GetMapping("/activePlayer")
     public ResponseEntity<?> getHand(@RequestBody  PlayerTableDTO playerTableDTO) {
         try {
-            ActivePlayer activePlayerDetails = pokerTableService.getActivePlayerDetails(playerTableDTO);
-            return  ResponseEntity.ok(activePlayerDetails);
+            PokerHand pokerHand = pokerTableService.getHand(playerTableDTO);
+            return  ResponseEntity.ok(pokerHand);
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
@@ -136,7 +134,7 @@ public class PokerTableController {
     }
 
     @PostMapping("/bet")
-    public ResponseEntity<?> bet(@RequestBody PlayerTableDTO playerTableDTO) {
+    public ResponseEntity<?> bet(@RequestBody BetDTO betDTO) {
         return null;
     }
 

@@ -32,8 +32,7 @@ public class PokerTable {
     private int smallBlind;
     private int bigBlind;
     private int startingAmt;
+    private int dealerIdx;
     @Column(nullable = false)
     private boolean gameActive = false;
-    public void appendCommunity(int numberCards) {
-    }
 }

@@ -20,6 +20,8 @@ public class ActivePlayer {
 
     private PokerHand hand;
 
+    private boolean folded = false;
+
     public ActivePlayer(Player player) {
         this.player = player;
         this.cards = new ArrayList<>();
